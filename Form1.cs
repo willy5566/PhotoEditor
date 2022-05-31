@@ -23,6 +23,7 @@ namespace PhotoEditor
 
         Image imgShow;
         int nRotMode = 0;
+        Rectangle[] rFocusRegions;
         Rectangle rFocusRegion;
         Rectangle rShowRegion;
 
@@ -47,6 +48,7 @@ namespace PhotoEditor
                 var img = qImages.Dequeue();
                 img.Dispose();
             }
+            rFocusRegions = new Rectangle[2];
             rFocusRegion = new Rectangle();
             rShowRegion = new Rectangle();
             mreLoad.Set();
@@ -75,33 +77,37 @@ namespace PhotoEditor
         }
 
         private void ShowImage()
-        {
+        {          
             pnlImgShow.Invoke(new Action(() =>
             {
                 if (imgShow.Width >= imgShow.Height)
                 {
-                    pbImgShow.Width = 900;
-                    pbImgShow.Height = 675;
+                    //pbImgShow.Width = 900;
+                    //pbImgShow.Height = 675;
+                    //pbImgShow.Location = new Point(0, (pbImgShow.Width - pbImgShow.Height));
 
-                    pnlImgShow.Width = 902;
-                    pnlImgShow.Height = 677;
+                    //pnlImgShow.Width = 902;
+                    //pnlImgShow.Height = 677;
 
-                    this.Width = 940;
-                    this.Height = 790;
+                    //this.Width = 940;
+                    //this.Height = 790;
                 }
                 else
                 {
-                    pbImgShow.Width = 675;
-                    pbImgShow.Height = 900;
+                    //pbImgShow.Width = 675;
+                    //pbImgShow.Height = 900;
+                    //pbImgShow.Location = new Point((pbImgShow.Height - pbImgShow.Width), 0);
 
-                    pnlImgShow.Width = 677;
-                    pnlImgShow.Height = 902;
+                    //pnlImgShow.Width = 677;
+                    //pnlImgShow.Height = 902;
 
-                    this.Width = 715;
-                    this.Height = 1015;
+                    //this.Width = 715;
+                    //this.Height = 1015;
                 }
                 //pbImgShow.Width = imgShow.Width;
                 //pbImgShow.Height = imgShow.Height;
+                pbImgShowTranslation();
+                UpdateFocusRegion();
                 pbImgShow.Invalidate();
             })
                         );
@@ -114,7 +120,6 @@ namespace PhotoEditor
                 {
                     imgShow = qImages.Dequeue();
                     ShowImage();
-
                     mreLoad.Set();
                 }
                 mreShow.Reset();
@@ -139,6 +144,19 @@ namespace PhotoEditor
         int nCutMode = 0; // 0:切寬；1:切高
         float fRate;
         private void pbImgShow_Paint(object sender, PaintEventArgs e)
+        {
+            if (imgShow != null)
+            {
+                e.Graphics.DrawImage(imgShow, rShowRegion);
+                Pen pen = new Pen(Brushes.Blue, 1);
+                e.Graphics.DrawRectangle(pen, rFocusRegion);
+
+                SolidBrush b = new SolidBrush(Color.FromArgb(100, 0, 255, 255));
+                e.Graphics.FillRectangles(b, rFocusRegions);               
+            }
+        }
+
+        private void pbImgShowTranslation()
         {
             if (imgShow != null)
             {
@@ -177,11 +195,8 @@ namespace PhotoEditor
 
                 rShowRegion.Size = new Size((int)(imgShow.Width / fRate), (int)(imgShow.Height / fRate));
 
+                pbImgShow.Location = new Point((900 - rShowRegion.Width) / 2, (900 - rShowRegion.Height) / 2);
                 pbImgShow.Size = rShowRegion.Size;
-
-                e.Graphics.DrawImage(imgShow, rShowRegion);
-                Pen pen = new Pen(Brushes.Blue, 3);
-                e.Graphics.DrawRectangle(pen, rFocusRegion);
             }
         }
 
@@ -258,7 +273,7 @@ namespace PhotoEditor
                     if (rFocusRegion.X < 0)
                         rFocusRegion.X = 0;
                     if (rFocusRegion.Right >= pbImgShow.Width)
-                        rFocusRegion.X = pbImgShow.Width - 1 - rFocusRegion.Width;
+                        rFocusRegion.X = pbImgShow.Width - 1 - rFocusRegion.Width;                   
                 }
                 else
                 {
@@ -267,9 +282,28 @@ namespace PhotoEditor
                     if (rFocusRegion.Y < 0)
                         rFocusRegion.Y = 0;
                     if (rFocusRegion.Bottom >= pbImgShow.Height)
-                        rFocusRegion.Y = pbImgShow.Height - 1 - rFocusRegion.Height;
+                        rFocusRegion.Y = pbImgShow.Height - 1 - rFocusRegion.Height;                
                 }
+                UpdateFocusRegion();
                 pbImgShow.Invalidate();
+            }
+        }
+
+        private void UpdateFocusRegion()
+        {
+            if (nCutMode == 0)
+            {
+                rFocusRegions[0] = new Rectangle(
+                        0, 0, rFocusRegion.X, rFocusRegion.Height);
+                rFocusRegions[1] = new Rectangle(
+                        rFocusRegion.Right, 0, pbImgShow.Width - rFocusRegion.Right, rFocusRegion.Height);
+            }
+            else
+            {
+                rFocusRegions[0] = new Rectangle(
+                        0, 0, rFocusRegion.Width, rFocusRegion.Y);
+                rFocusRegions[1] = new Rectangle(
+                        0, rFocusRegion.Bottom, rFocusRegion.Width, pbImgShow.Height - rFocusRegion.Bottom);
             }
         }
 
@@ -345,6 +379,7 @@ namespace PhotoEditor
             rFocusRegion.X = 0;
             rFocusRegion.Y = 0;
             imgShow.RotateFlip(RotateFlipType.Rotate90FlipNone);
+            
             ShowImage();
         }
 

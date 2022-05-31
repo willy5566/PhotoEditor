@@ -48,7 +48,7 @@
             this.pnlImgShow.Controls.Add(this.pbImgShow);
             this.pnlImgShow.Location = new System.Drawing.Point(12, 64);
             this.pnlImgShow.Name = "pnlImgShow";
-            this.pnlImgShow.Size = new System.Drawing.Size(902, 677);
+            this.pnlImgShow.Size = new System.Drawing.Size(902, 902);
             this.pnlImgShow.TabIndex = 0;
             // 
             // pbImgShow
@@ -150,7 +150,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(924, 751);
+            this.ClientSize = new System.Drawing.Size(924, 976);
             this.Controls.Add(this.ckbDrawTime);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnPass);

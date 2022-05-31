@@ -14,18 +14,24 @@ namespace PhotoEditor
 {
     public partial class Form1 : Form
     {
-        Queue<string> qImgPath = new Queue<string>();
-        Queue<Image> qImages = new Queue<Image>();
-        Queue<string> qImgSavePath = new Queue<string>();
+        Queue<string> qImgPath = new Queue<string>(); // 圖片路徑列隊
+        Queue<Image> qImages = new Queue<Image>(); // 圖片列隊
+        Queue<string> qImgSavePath = new Queue<string>();  // 圖片路徑列隊存檔用
         Queue<Image> qImageSave = new Queue<Image>();
-        ManualResetEvent mreLoad = new ManualResetEvent(false);
-        ManualResetEvent mreShow = new ManualResetEvent(false);
+        ManualResetEvent mreLoad = new ManualResetEvent(false); // 讀檔鎖
+        ManualResetEvent mreShow = new ManualResetEvent(false); // 秀圖鎖
 
-        Image imgShow;
-        int nRotMode = 0;
-        Rectangle[] rFocusRegions;
-        Rectangle rFocusRegion;
-        Rectangle rShowRegion;
+        Image imgShow; // 顯示用
+        int nRotMode = 0; // 旋轉模式
+        Rectangle[] rFocusRegions; // 遮蔽區
+        Rectangle rFocusRegion; // 切圖區
+        Rectangle rShowRegion; // 秀圖區
+
+        const int MAX_BOUND = 900; // UI秀圖最大範圍
+
+        int nTotal = 0; // 總張數
+        int nSave = 0; // 存圖數
+        int nPass = 0; // 跳過數
 
         public Form1()
         {
@@ -34,6 +40,9 @@ namespace PhotoEditor
 
         bool bFrtLoad = false;
 
+        /// <summary>
+        /// 初始化物件
+        /// </summary>
         private void IniObject()
         {
             qImgPath.Clear();
@@ -45,7 +54,7 @@ namespace PhotoEditor
             }
             while (qImageSave.Count > 0)
             {
-                var img = qImages.Dequeue();
+                var img = qImageSave.Dequeue();
                 img.Dispose();
             }
             rFocusRegions = new Rectangle[2];
@@ -53,21 +62,29 @@ namespace PhotoEditor
             rShowRegion = new Rectangle();
             mreLoad.Set();
             mreShow.Set();
+
+            nTotal = nSave = nPass = 0;
         }
 
+        /// <summary>
+        /// 讀圖執行續
+        /// </summary>
         private void thdImgLoad_DoWork()
         {
             while (qImgPath.Count > 0)
             {
+                // 若已經有三張圖讀進記憶體則卡住
                 if (qImages.Count > 3)
                 {
                     mreLoad.Reset();
                     mreLoad.WaitOne();
                 }
                 string path = qImgPath.Dequeue();
-                Bitmap bmp = new Bitmap(path);
-                qImages.Enqueue(bmp);
+                Bitmap bmp = new Bitmap(path); // 讀圖
+                qImages.Enqueue(bmp); // 加入列隊
                 qImgSavePath.Enqueue(path);
+
+                // 初始是卡住狀態所以第一張要解鎖
                 if (bFrtLoad)
                 {
                     mreShow.Set();
@@ -82,7 +99,7 @@ namespace PhotoEditor
             {
                 if (imgShow.Width >= imgShow.Height)
                 {
-                    //pbImgShow.Width = 900;
+                    //pbImgShow.Width = MAX_BOUND;
                     //pbImgShow.Height = 675;
                     //pbImgShow.Location = new Point(0, (pbImgShow.Width - pbImgShow.Height));
 
@@ -95,7 +112,7 @@ namespace PhotoEditor
                 else
                 {
                     //pbImgShow.Width = 675;
-                    //pbImgShow.Height = 900;
+                    //pbImgShow.Height = MAX_BOUND;
                     //pbImgShow.Location = new Point((pbImgShow.Height - pbImgShow.Width), 0);
 
                     //pnlImgShow.Width = 677;
@@ -116,17 +133,22 @@ namespace PhotoEditor
         {
             while (true)
             {
+                // 若列隊裡有圖則取出第一張秀出來
                 if (qImages.Count > 0)
                 {
                     imgShow = qImages.Dequeue();
                     ShowImage();
                     mreLoad.Set();
                 }
+
+                // 秀完需要卡住，不然會秀到沒圖為止
+                // 平常卡住不讓迴圈空跑吃效能
                 mreShow.Reset();
                 mreShow.WaitOne();
             }
         }
 
+        // 旋轉模式(未完成)
         private void SetRotateMode(int nMode)
         {
             if (nMode < 0)
@@ -141,30 +163,32 @@ namespace PhotoEditor
             }
         }
 
-        int nCutMode = 0; // 0:切寬；1:切高
-        float fRate;
+        int nCutMode = 0; // 裁切模式 0:切寬；1:切高
+        float fRate; // 原圖與秀圖比例
         private void pbImgShow_Paint(object sender, PaintEventArgs e)
         {
             if (imgShow != null)
             {
-                e.Graphics.DrawImage(imgShow, rShowRegion);
+                e.Graphics.DrawImage(imgShow, rShowRegion); // 秀圖
                 Pen pen = new Pen(Brushes.Blue, 1);
-                e.Graphics.DrawRectangle(pen, rFocusRegion);
+                e.Graphics.DrawRectangle(pen, rFocusRegion); // 畫裁切框
 
                 SolidBrush b = new SolidBrush(Color.FromArgb(100, 0, 255, 255));
-                e.Graphics.FillRectangles(b, rFocusRegions);               
+                e.Graphics.FillRectangles(b, rFocusRegions); // 畫遮蔽區
             }
         }
 
+        // 計算圖片與控制項關係
         private void pbImgShowTranslation()
         {
             if (imgShow != null)
             {
+                // 計算比例
                 float fWRate = (float)imgShow.Width / pnlImgShow.Width;
                 float fHRate = (float)imgShow.Height / pnlImgShow.Height;
                 fRate = fWRate > fHRate ? fWRate : fHRate;
 
-
+                // 計算裁切模式(3:2)
                 if (imgShow.Width < imgShow.Height)
                 {
                     if (imgShow.Height / 3 > imgShow.Width / 2)
@@ -179,6 +203,8 @@ namespace PhotoEditor
                     else
                         nCutMode = 1;
                 }
+
+                // 計算裁切區
                 if (nCutMode == 1)
                 {
                     int nimgShowW = (int)(imgShow.Width / fRate);
@@ -193,13 +219,20 @@ namespace PhotoEditor
                     rFocusRegion.Size = new Size(nimgShowW, nimgShowH);
                 }
 
+                // 計算秀圖區
                 rShowRegion.Size = new Size((int)(imgShow.Width / fRate), (int)(imgShow.Height / fRate));
 
-                pbImgShow.Location = new Point((900 - rShowRegion.Width) / 2, (900 - rShowRegion.Height) / 2);
+                // 計算相框位置
+                pbImgShow.Location = new Point((MAX_BOUND - rShowRegion.Width) / 2, (MAX_BOUND - rShowRegion.Height) / 2);
                 pbImgShow.Size = rShowRegion.Size;
             }
         }
 
+        /// <summary>
+        /// 跳過
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnPass_Click(object sender, EventArgs e)
         {
             if (imgShow == null)
@@ -212,8 +245,16 @@ namespace PhotoEditor
             mreShow.Set();
 
             rFocusRegion = new Rectangle();
+
+            nPass++;
+            UpdateTitle();
         }
 
+        /// <summary>
+        /// 讀取
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnLoad_Click(object sender, EventArgs e)
         {
             OpenFileDialog open = new OpenFileDialog();
@@ -224,7 +265,9 @@ namespace PhotoEditor
 
             IniObject();
 
-            this.Text = open.SafeFileNames.Length.ToString();
+            nTotal = open.SafeFileNames.Length;
+            UpdateTitle();
+
             bFrtLoad = true;
 
             foreach (var path in open.FileNames)
@@ -239,16 +282,18 @@ namespace PhotoEditor
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            UpdateTitle();
             Thread thdImgShow = new Thread(new ThreadStart(thdImgShow_DoWork));
             thdImgShow.IsBackground = true;
             thdImgShow.Start();
         }
 
-        bool bMouseDown = false;
-        Point plastClick;
-        Point pFocusRegionXY;
+        bool bMouseDown = false; // 滑鼠按下旗標
+        Point plastClick;  // 滑鼠按下時座標
+        Point pFocusRegionXY; // 滑鼠按下時裁切區原點
         private void pbImgShow_MouseDown(object sender, MouseEventArgs e)
         {
+            // 若滑鼠左鍵點在裁切區內則記錄座標
             bMouseDown = rFocusRegion.Contains(e.Location) && e.Button == MouseButtons.Left;
             if (bMouseDown)
             {
@@ -264,6 +309,7 @@ namespace PhotoEditor
 
         private void pbImgShow_MouseMove(object sender, MouseEventArgs e)
         {
+            // 裁切區移動計算
             if (bMouseDown)
             {
                 if (nCutMode == 0)
@@ -289,6 +335,7 @@ namespace PhotoEditor
             }
         }
 
+        // 根據裁切區更新遮蔽區
         private void UpdateFocusRegion()
         {
             if (nCutMode == 0)
@@ -307,53 +354,60 @@ namespace PhotoEditor
             }
         }
 
-        //int nSaveCnt = 0;
+        // 裁切並存圖
         private void btnSave_Click(object sender, EventArgs e)
         {
             if (imgShow == null)
                 return;
 
-            Image imgPass = imgShow;
+            Image imgSave = imgShow;
             imgShow = null;
             string path = qImgSavePath.Dequeue();
 
             FileInfo f = new FileInfo(path);
-            string sCreationTime = f.CreationTime.ToString();
+            string sCreationTime = f.CreationTime.ToString(); // 讀取原圖建立時間
 
             string sNewName = "_" + System.IO.Path.GetFileName(path);
             string sNewPath = System.IO.Path.GetDirectoryName(path) + @"\4X6\";
             if (!System.IO.Directory.Exists(sNewPath))
                 System.IO.Directory.CreateDirectory(sNewPath);
+
+            // 將裁切區改為原本倍率
             RectangleF rSave = new RectangleF(
                 fRate * rFocusRegion.X,
                 fRate * rFocusRegion.Y,
                 fRate * rFocusRegion.Width,
                 fRate * rFocusRegion.Height);
 
-            //nSaveCnt++;
+            // 非同步切圖存檔
             Task.Run(new Action(() =>
             {
                 Bitmap bmpSave = new Bitmap((int)rSave.Width, (int)rSave.Height);
                 var g = Graphics.FromImage(bmpSave);
-                g.DrawImage(imgPass, new RectangleF(0,0, rSave.Width, rSave.Height), rSave, GraphicsUnit.Pixel);
+                g.DrawImage(imgSave, new RectangleF(0,0, rSave.Width, rSave.Height), rSave, GraphicsUnit.Pixel);
 
+                // 時間水印
                 if (ckbDrawTime.Checked) g.DrawString(sCreationTime, new Font("Ariel", 120, FontStyle.Regular, GraphicsUnit.Pixel), Brushes.Red, new Point(10, 10));
+
                 bmpSave.Save(sNewPath + sNewName, System.Drawing.Imaging.ImageFormat.Jpeg);
                 g.Dispose();
                 bmpSave.Dispose();
 
-                imgPass.Dispose();
-                imgPass = null;
-            }));
-            
+                imgSave.Dispose();
+                imgSave = null;
+            }));         
 
             mreShow.Set();
 
             rFocusRegion = new Rectangle();
+
+            nSave++;
+            UpdateTitle();
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
+            // 快捷鍵
             switch(e.KeyCode)
             {
                 case Keys.A:
@@ -371,6 +425,11 @@ namespace PhotoEditor
             }
         }
 
+        /// <summary>
+        /// 順時鐘90度
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnR90_Click(object sender, EventArgs e)
         {
             if (imgShow == null)
@@ -378,11 +437,15 @@ namespace PhotoEditor
 
             rFocusRegion.X = 0;
             rFocusRegion.Y = 0;
-            imgShow.RotateFlip(RotateFlipType.Rotate90FlipNone);
-            
+            imgShow.RotateFlip(RotateFlipType.Rotate90FlipNone);      
             ShowImage();
         }
 
+        /// <summary>
+        /// 逆時鐘90度
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnL90_Click(object sender, EventArgs e)
         {
             if (imgShow == null)
@@ -392,6 +455,11 @@ namespace PhotoEditor
             rFocusRegion.Y = 0;
             imgShow.RotateFlip(RotateFlipType.Rotate270FlipNone);
             ShowImage();
+        }
+
+        private void UpdateTitle()
+        {
+            this.Text = "Total: " + nTotal + ", Save: " + nSave + ", Pass: " + nPass + ", Left: " + (nTotal - nSave - nPass);
         }
     }
 }

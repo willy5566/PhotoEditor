@@ -1,0 +1,9 @@
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\bin\Debug\PhotoEditor.exe.config
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\bin\Debug\PhotoEditor.exe
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\bin\Debug\PhotoEditor.pdb
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\obj\Debug\PhotoEditor.csprojAssemblyReference.cache
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\obj\Debug\PhotoEditor.Form1.resources
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\obj\Debug\PhotoEditor.Properties.Resources.resources
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\obj\Debug\PhotoEditor.csproj.GenerateResource.cache
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\obj\Debug\PhotoEditor.exe
+E:\user\Documents\Visual Studio 2019\Projects\PhotoEditor\obj\Debug\PhotoEditor.pdb

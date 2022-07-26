@@ -32,8 +32,6 @@
             this.pbImgShow = new System.Windows.Forms.PictureBox();
             this.btnL90 = new System.Windows.Forms.Button();
             this.btnR90 = new System.Windows.Forms.Button();
-            this.btnZoomIn = new System.Windows.Forms.Button();
-            this.btnZoomOut = new System.Windows.Forms.Button();
             this.btnLoad = new System.Windows.Forms.Button();
             this.btnPass = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
@@ -82,24 +80,6 @@
             this.btnR90.Text = "右90 (E)";
             this.btnR90.UseVisualStyleBackColor = true;
             this.btnR90.Click += new System.EventHandler(this.btnR90_Click);
-            // 
-            // btnZoomIn
-            // 
-            this.btnZoomIn.Location = new System.Drawing.Point(256, 12);
-            this.btnZoomIn.Name = "btnZoomIn";
-            this.btnZoomIn.Size = new System.Drawing.Size(75, 46);
-            this.btnZoomIn.TabIndex = 1;
-            this.btnZoomIn.Text = "IN";
-            this.btnZoomIn.UseVisualStyleBackColor = true;
-            // 
-            // btnZoomOut
-            // 
-            this.btnZoomOut.Location = new System.Drawing.Point(337, 12);
-            this.btnZoomOut.Name = "btnZoomOut";
-            this.btnZoomOut.Size = new System.Drawing.Size(75, 46);
-            this.btnZoomOut.TabIndex = 1;
-            this.btnZoomOut.Text = "OUT";
-            this.btnZoomOut.UseVisualStyleBackColor = true;
             // 
             // btnLoad
             // 
@@ -154,9 +134,7 @@
             this.Controls.Add(this.ckbDrawTime);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnPass);
-            this.Controls.Add(this.btnZoomOut);
             this.Controls.Add(this.btnR90);
-            this.Controls.Add(this.btnZoomIn);
             this.Controls.Add(this.btnLoad);
             this.Controls.Add(this.btnL90);
             this.Controls.Add(this.pnlImgShow);
@@ -177,8 +155,6 @@
         private System.Windows.Forms.PictureBox pbImgShow;
         private System.Windows.Forms.Button btnL90;
         private System.Windows.Forms.Button btnR90;
-        private System.Windows.Forms.Button btnZoomIn;
-        private System.Windows.Forms.Button btnZoomOut;
         private System.Windows.Forms.Button btnLoad;
         private System.Windows.Forms.Button btnPass;
         private System.Windows.Forms.Button btnSave;
